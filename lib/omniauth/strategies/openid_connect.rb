@@ -151,7 +151,15 @@ module OmniAuth
       end
 
       def user_info
-        @user_info ||= access_token.userinfo!
+        @user_info ||= lambda {
+          begin
+            configure_http_client_ssl if client_options.ssl.certificate.present? && client_options.ssl.private_key.present?
+            _userinfo = access_token.userinfo!
+          ensure
+            reset_http_client
+          end
+          _userinfo
+        }.call()
       end
 
       def access_token
